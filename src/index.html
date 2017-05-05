@@ -1,0 +1,153 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>事件实时监测</title>
+    <link href="content/plugins/leaflet/leaflet.css" rel="stylesheet" />
+    <link href="content/css/style.css" rel="stylesheet" />
+
+    <script src="content/js/jquery-1.11.2.min.js"></script>
+
+    <script src="content/plugins/leaflet/leaflet-src.js"></script>
+    <script src="content/plugins/leaflet/layers/leaflet-baidu.js"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=eamDDEk7gqfPzu0EWYlly7HgaV44YfLA"></script>
+
+    <link href="content/plugins/bxslider/jquery.bxslider.css" rel="stylesheet" />
+    <script src="content/plugins/bxslider/jquery.bxslider.js"></script>
+
+    <script src="content/data/events.js"></script>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="map"></div>
+
+    <div class="event" style="position:fixed; top:100px;left:15px;border:1px solid black;height:auto;width:200px;z-index:1000;border-radius:5px;">
+        <div class="top" id="top" style="width:100%;height:60px;background:rgba(0, 0, 0, 0.7);color:white;font-size:14px;">
+
+        </div>
+        <div class="background" style="z-index:1005; width :100%;height:400px;opacity: 0.5;background-color:rgba(0, 0, 0, 0); background: linear-gradient(to bottom, #3e5170 0%, #000000 100%);">
+        </div>
+
+        <div class="main" style="width:100%;height:400px;position:absolute;top:60px;">
+            <div class="line-wrap" style="position: absolute;z-index: 1007;padding: 25px 0px 40px 15px;height: 400px;">
+                <div class="line" style="background: rgba(255, 255, 255, 0.28);width: 4px;height:350px;border-radius: 5px;"></div>
+            </div>
+            <div style="padding-top:10px;">
+                <div id="events">
+
+                </div>
+            </div>
+        </div>
+        <div class="foot" style="width:100%;height:40px;background-color: rgb(38, 37, 43);">
+        </div>
+    </div>
+    <script>
+        var options = {
+            crs: L.CRS.EPSGB3857,
+            center: [31.207391, 121.608203],
+            zoom: 4
+        };
+
+        var baseMaps = {
+            Normal: new L.TileLayer.BaiduLayer("Normal.Map"),
+            satellite: new L.TileLayer.BaiduLayer("Satellite.Map"),
+            road: new L.TileLayer.BaiduLayer("Satellite.Road"),
+            cnormal: new L.TileLayer.BaiduLayer("CustomStyle.Map.normal"),
+            light: new L.TileLayer.BaiduLayer("CustomStyle.Map.light"),
+            dark: new L.TileLayer.BaiduLayer("CustomStyle.Map.dark"),
+            redalert: new L.TileLayer.BaiduLayer("CustomStyle.Map.redalert"),
+            googlelite: new L.TileLayer.BaiduLayer("CustomStyle.Map.googlelite"),
+            grassgreen: new L.TileLayer.BaiduLayer("CustomStyle.Map.grassgreen"),
+            midnight: new L.TileLayer.BaiduLayer("CustomStyle.Map.midnight"),
+            pink: new L.TileLayer.BaiduLayer("CustomStyle.Map.pink"),
+            darkgreen: new L.TileLayer.BaiduLayer("CustomStyle.Map.darkgreen"),
+            bluish: new L.TileLayer.BaiduLayer("CustomStyle.Map.bluish"),
+            grayscale: new L.TileLayer.BaiduLayer("CustomStyle.Map.grayscale"),
+            hardedge: new L.TileLayer.BaiduLayer("CustomStyle.Map.hardedge"),
+            mysytle: new L.TileLayer.BaiduLayer("CustomStyle.Map", { styles: 't%3Abuilding%7Ce%3Ag%7Cc%3A%23cccccc%2Ct%3Aroad%7Ce%3Aall%7Cc%3A%23999999%2Ct%3Aland%7Ce%3Aall%7Cc%3A%2376a5af%2Ct%3Agreen%7Ce%3Aall%7Cc%3A%236aa84f%2Ct%3Amanmade%7Ce%3Aall%7Cc%3A%23eeeeee%2Ct%3Aboundary%7Ce%3Aall%7Cc%3A%23444444' })
+        };
+
+        var overlayMaps = {
+            //Office: L.marker(L.latLng(31.207391, 121.608203)).bindPopup('I\'m working Shanghai in SAP Labs!'),
+            road: new L.TileLayer.BaiduLayer("Satellite.Road")
+        };
+
+        options.layers = [baseMaps.Normal];
+        var map = L.map("map", options);
+
+        L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            //添加事件数据
+            for (var i = 0; i < dataEvents.length; i++) {
+                var event = dataEvents[i];
+                //console.log(event);
+                var html = "<div style='height:50px;'><div class='circle'></div>" +
+                        "<div class='desc'>" +
+                        "<div class='data'>" + event.date + "</div>" +
+                        "<div class='name' style='opacity:0.8'>" + event.shortname + "</div>" +
+                        "</div></div>";
+
+                var domEvent = $('#events').append(html);
+
+            }
+            var marker;
+
+            //加载滚动插件
+            var slider = $('#events').bxSlider({
+                mode: 'vertical',
+                slideMargin: 5,
+                startSlides: 0,
+                auto: true,
+                useCSS: false,
+                autoControls: true,
+                minSlides: 7,
+                moveSlides: 1,
+                pause: 700,
+                adaptiveHeight: true,
+                ticker: true,
+                maxSlides: 7,
+
+                onSliderLoad: function (index) {
+                    //console.log(index);
+                },
+
+                onSlideNext: function ($slideElement, oldIndex, newIndex) {
+                    console.log(oldIndex);
+
+                    var event = dataEvents[oldIndex];
+
+                    //显示当前事件
+                    $('#top').html(event.eventname);
+
+                    //清除上一个marker
+                    if (marker != null) {
+                        map.removeLayer(marker);
+                    }
+
+                    marker = L.marker([event.latitude, event.longitude]).addTo(map).bindPopup("<b>事件名称：" + event.eventname + "</b><br>事件简称：<b>" + event.shortname + "</b>").openPopup();
+
+                }
+            });
+
+            var current = slider.getCurrentSlide();
+            console.log(current);
+        });
+    </script>
+</body>
+</html>
